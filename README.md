@@ -9,7 +9,7 @@
 
 To run the experiment:
 
-1. Download the dataset from this link [TO_ADD]()
+1. Download the dataset from this [link](https://w3id.org/eke/KDA/KDA_dataset.tar.gz)
 2. Unpack the dataset:
 
 ```
