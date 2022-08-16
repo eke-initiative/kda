@@ -1,4 +1,4 @@
-name: kda5
+name: kda
 channels:
   - defaults
   - conda-forge
@@ -44,6 +44,4 @@ dependencies:
     - simplemma==0.3.0
     - stop-words==2018.7.23
     - threadpoolctl==3.1.0
-    - libgfortran==3.0.1
-    - llvm-openmp==12.0.0
 prefix: /Users/lgu/anaconda3/envs/kda

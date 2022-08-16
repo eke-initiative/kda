@@ -56,7 +56,7 @@ mvn exec:java  -Dexec.cleanupDaemonThreads=false -Dexec.mainClass="it.cnr.istc.s
 ```
 git clone https://github.com/empirical-knowledge-engineering/kda.git
 cd kda/
-conda create --name kda --file requirements.txt
+conda env create -f environment.yml 
 conda activate kda
 python preprocess_virtual_documents.py <KDA_Dataset_path>
 ```
