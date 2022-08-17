@@ -1,13 +1,15 @@
+import argparse
 import bz2
 import os
 import pickle
 from collections import Counter
+
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfTransformer
+
 from tokenizer import LemmaTokenizer
 from utils import get_stopwords
-import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='..')
@@ -22,6 +24,8 @@ if __name__ == '__main__':
     compute_tdf_idf = args.tfidf
     stop = get_stopwords("stopwords.txt")
 
+    experiment_folder = input_folder + "/experiment"
+
     if not args.word_counters:
         compute_word_counters = True
         word_counters = []
@@ -31,12 +35,8 @@ if __name__ == '__main__':
 
     print(f"Input folder: {input_folder}\nTFIDF {compute_tdf_idf}\nCompute Word Counters {compute_word_counters}")
 
-    if compute_tdf_idf:
-        experiment_folder = input_folder + "/experiment_tf_idf"
-    else:
-        experiment_folder = input_folder + "/experiment_binary"
-
     if not os.path.exists(experiment_folder):
+        print(f"Creating experiment folder {experiment_folder}")
         os.mkdir(experiment_folder)
 
     f = open(f"{input_folder}/annotations.tsv", "r")

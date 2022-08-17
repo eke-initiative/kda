@@ -1,10 +1,11 @@
 import os
 import pickle
+import sys
+
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 from scipy.sparse import csr_matrix
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import MultiLabelBinarizer
-import sys
 
 folder = sys.argv[1] + "/experiment/"
 n_components = 100
@@ -15,9 +16,9 @@ y = pickle.load(open(folder + "y_pre.p", "rb"))
 print("Loaded..")
 
 mlb = MultiLabelBinarizer()
-y = mlb.fit_transform(y[0])
+y = mlb.fit_transform(y['Class Label'])
 X = csr_matrix(X.values)
-pickle.dump(mlb, open(folder+"mlb.p", "wb"))
+pickle.dump(mlb, open(folder + "mlb.p", "wb"))
 
 if n_components is None:
     svd = TruncatedSVD(n_components=min(X.shape[0], X.shape[1]))
@@ -25,7 +26,7 @@ else:
     svd = TruncatedSVD(n_components=n_components)
 
 X = svd.fit_transform(X)
-pickle.dump(svd, open(folder+"svd.p", "wb"))
+pickle.dump(svd, open(folder + "svd.p", "wb"))
 
 mskf = MultilabelStratifiedKFold(n_splits=10, shuffle=True, random_state=42)
 
@@ -37,8 +38,8 @@ for train_index, test_index in mskf.split(X, y):
     fold_dir = folder + "/" + str(n_fold) + "/"
     if not os.path.exists(fold_dir):
         os.mkdir(fold_dir)
-    pickle.dump(X_train, open(fold_dir+"/X_train.p", "wb"))
-    pickle.dump(y_train, open(fold_dir+"/y_train.p", "wb"))
-    pickle.dump(X_test, open(fold_dir+"/X_test.p", "wb"))
-    pickle.dump(y_test, open(fold_dir+"/y_test.p", "wb"))
+    pickle.dump(X_train, open(fold_dir + "/X_train.p", "wb"))
+    pickle.dump(y_train, open(fold_dir + "/y_train.p", "wb"))
+    pickle.dump(X_test, open(fold_dir + "/X_test.p", "wb"))
+    pickle.dump(y_test, open(fold_dir + "/y_test.p", "wb"))
     n_fold = n_fold + 1

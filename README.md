@@ -58,10 +58,11 @@ git clone https://github.com/empirical-knowledge-engineering/kda.git
 cd kda/
 conda env create -f environment.yml 
 conda activate kda
-python preprocess_virtual_documents.py <KDA_Dataset_path>
+python preprocess_virtual_documents.py --input_folder <KDA_Dataset_path>
 ```
+The default vectorisation is in Binary setting, TF-IDF setting is activated by giving `--tfidf` as argument of the script `preprocess_virtual_documents.py`. 
 
-Alternatively, you can use preprocessed dataset available in ``KDA_Dataset/experiment``
+Alternatively, you can use the preprocessed dataset available in ``KDA_Dataset/experiment``
 
 5. Create stratified folds
 
