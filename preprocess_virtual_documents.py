@@ -1,79 +1,91 @@
 import bz2
 import os
 import pickle
-import sys
 from collections import Counter
-
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfTransformer
-
 from tokenizer import LemmaTokenizer
 from utils import get_stopwords
+import argparse
 
-input_folder = sys.argv[1]
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='..')
 
-compute_tdf_idf = False
-if len(sys.argv) > 2 and sys.argv[2] == "tfidf":
-    compute_tdf_idf = True
+    parser.add_argument('--input_folder', dest='input_folder', help=' ... ')
+    parser.add_argument('--tfidf', dest='tfidf', action='store_true', default=False)
+    parser.add_argument('--word_counters', dest='word_counters', help=' ... ')
 
-if compute_tdf_idf:
-    experiment_folder = input_folder + "/experiment_tf_idf"
-else:
-    experiment_folder = input_folder + "/experiment_binary"
+    args = parser.parse_args()
 
-stop = get_stopwords("stopwords.txt")
+    input_folder = args.input_folder
+    compute_tdf_idf = args.tfidf
+    stop = get_stopwords("stopwords.txt")
 
-if not os.path.exists(experiment_folder):
-    os.mkdir(experiment_folder)
+    if not args.word_counters:
+        compute_word_counters = True
+        word_counters = []
+    else:
+        compute_word_counters = False
+        word_counters = pickle.load(open(args.word_counters, "rb"))
 
-f = open(f"{input_folder}/annotations.tsv", "r")
+    print(f"Input folder: {input_folder}\nTFIDF {compute_tdf_idf}\nCompute Word Counters {compute_word_counters}")
 
-print("Loading and vectorizing text")
-labels = []
-word_counters = []
-tokenizer = LemmaTokenizer()
-for line in f.readlines():
-    s = line.split("\t")
-    file_path = s[0]
-    print(f"Loading {file_path}")
-    domains = s[1][:-2].split("#")
+    if compute_tdf_idf:
+        experiment_folder = input_folder + "/experiment_tf_idf"
+    else:
+        experiment_folder = input_folder + "/experiment_binary"
 
-    word_counter = Counter([])
-    s = b''
-    with bz2.open(f"{input_folder}/{file_path}", 'rb') as f:
-        while True:
-            s += f.read(1024 * 1024)
-            if len(s) == 0:
-                break
-            L = s.split(b'\n')
-            for li in L[:-1]:  # the 1 MB block that we read might stop in the middle of a line ... (*)
-                word_counter.update(tokenizer(str(li.decode("utf-8"))))
-            s = L[-1]  # (*) ... so we keep the rest for the next iteration
+    if not os.path.exists(experiment_folder):
+        os.mkdir(experiment_folder)
 
-    # word_counter = Counter([])
-    # for li in bz2.open(f"{input_folder}/{file_path}", "r"):
-    #     word_counter.update(tokenizer(str(li.decode("utf-8")).strip("\n")))
+    f = open(f"{input_folder}/annotations.tsv", "r")
 
-    labels.append(domains)
-    word_counters.append(dict(word_counter))
+    print("Loading and vectorizing text")
+    labels = []
 
-X = pd.DataFrame(word_counters).fillna(0)
+    tokenizer = LemmaTokenizer()
+    for line in f.readlines():
+        s = line.split("\t")
+        file_path = s[0]
+        print(f"Loading {file_path}")
+        domains = s[1][:-2].split("#")
 
-print(f"Dumping word_counters in {experiment_folder}/word_counters.p")
-pickle.dump(word_counters, open(f"{experiment_folder}/word_counters.p", "wb"))
+        if compute_word_counters:
+            print(f"Reading {file_path}")
+            word_counter = Counter([])
+            s = b''
+            with bz2.open(f"{input_folder}/{file_path}", 'rb') as f:
+                while True:
+                    s += f.read(1024 * 1024)
+                    if len(s) == 0:
+                        break
+                    L = s.split(b'\n')
+                    for li in L[:-1]:  # the 1 MB block that we read might stop in the middle of a line ... (*)
+                        word_counter.update(tokenizer(str(li.decode("utf-8"))))
+                    s = L[-1]  # (*) ... so we keep the rest for the next iteration
+            word_counters.append(dict(word_counter))
 
-if compute_tdf_idf:
-    X = pd.DataFrame(TfidfTransformer().fit_transform(X).fit_transform(X).todense())
-else:
-    X = np.sign(X)
+        labels.append(domains)
 
-y = pd.DataFrame(labels, columns=['Class Label'])
+    y = pd.DataFrame()
+    y['Class Label'] = labels
 
-print(f"Dumping X in {experiment_folder}/X_pre.p")
-pickle.dump(X, open(f"{experiment_folder}/X_pre.p", "wb"))
+    X = pd.DataFrame(word_counters).fillna(0)
 
-print(f"Dumping y in {experiment_folder}/y_pre.p")
-pickle.dump(y, open(f"{experiment_folder}/y_pre.p", "wb"))
+    if compute_word_counters:
+        print(f"Dumping word_counters in {experiment_folder}/word_counters.p")
+        pickle.dump(word_counters, open(f"{experiment_folder}/word_counters.p", "wb"))
 
-print("Dataset created!")
+    if compute_tdf_idf:
+        X = pd.DataFrame(TfidfTransformer().fit_transform(X).fit_transform(X).todense())
+    else:
+        X = np.sign(X)
+
+    print(f"Dumping X in {experiment_folder}/X_pre.p")
+    pickle.dump(X, open(f"{experiment_folder}/X_pre.p", "wb"))
+
+    print(f"Dumping y in {experiment_folder}/y_pre.p")
+    pickle.dump(y, open(f"{experiment_folder}/y_pre.p", "wb"))
+
+    print("Dataset created!")
